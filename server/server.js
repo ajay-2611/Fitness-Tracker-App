@@ -18,9 +18,14 @@ mongoose.connect('mongodb+srv://Ajay-26:Ajay-26@cluster2.k3xpcnj.mongodb.net/tes
 });
 
 
- app.use(cors({
-  origin: '*'
+app.use(cors({
+    origin: [
+        'https://my-fitness-app.vercel.app',
+        'http://localhost:8000' 
+    ],
+    credentials: true
 }));
+
 app.use(bodyParser.json());
 
 app.use('/api/auth', authRoutes);
