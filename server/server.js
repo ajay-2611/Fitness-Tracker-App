@@ -8,7 +8,7 @@ const entriesRoutes = require('./routes/entries');
 
 const app = express();
 
-mongoose.connect('mongodb+srv://Ajay-26:<Ajay-26>@cluster2.k3xpcnj.mongodb.net/test?retryWrites=true&w=majority&appName=Cluster2', {
+mongoose.connect('mongodb+srv://Ajay-26:<Ajay-26>@cluster2.k3xpcnj.mongodb.net/test?retryWrites=true&w=majority&appName=Cluster2'), {
     useNewUrlParser: true,
     useUnifiedTopology: true
 }).then(() => {
@@ -18,8 +18,12 @@ mongoose.connect('mongodb+srv://Ajay-26:<Ajay-26>@cluster2.k3xpcnj.mongodb.net/t
 });
 
 app.use(cors({
-    origin: 'https://yourdeployedsite.com'}   
-    ));
+    origin:[
+        '*',
+        "http://localhost:8000"
+        },
+        credentials:true    
+             }  ));
 app.use(bodyParser.json());
 
 app.use('/api/auth', authRoutes);
