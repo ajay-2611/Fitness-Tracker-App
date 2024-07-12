@@ -8,7 +8,7 @@ const entriesRoutes = require('./routes/entries');
 
 const app = express();
 
-mongoose.connect('mongodb://0.0.0.0:27017/fitness-tracker', {
+mongoose.connect('mongodb+srv://Ajay-26:<Ajay-26>@cluster2.k3xpcnj.mongodb.net/test?retryWrites=true&w=majority&appName=Cluster2', {
     useNewUrlParser: true,
     useUnifiedTopology: true
 }).then(() => {
@@ -17,7 +17,9 @@ mongoose.connect('mongodb://0.0.0.0:27017/fitness-tracker', {
     console.error('Error connecting to MongoDB', err);
 });
 
-app.use(cors());
+app.use(cors({
+    origin: 'https://yourdeployedsite.com'}   
+    ));
 app.use(bodyParser.json());
 
 app.use('/api/auth', authRoutes);
