@@ -146,19 +146,39 @@ router.delete('/:id', async (req, res) => {
     const { id } = req.params;
     
     try {
+        // Validate ObjectId format
+        if (!mongoose.Types.ObjectId.isValid(id)) {
+            return res.status(400).json({ error: 'Invalid entry ID format' });
+        }
+
+        // Find and delete the entry
         const deletedEntry = await FitnessEntry.findOneAndDelete({ 
-            _id: id, 
+            _id: new mongoose.Types.ObjectId(id),
             userId: req.userId 
         });
         
         if (!deletedEntry) {
-            return res.status(404).json({ error: 'Entry not found or unauthorized' });
+            return res.status(404).json({ 
+                error: 'Entry not found or you do not have permission to delete it' 
+            });
         }
         
-        res.json({ message: 'Entry deleted successfully' });
+        res.json({ 
+            success: true,
+            message: 'Entry deleted successfully',
+            deletedEntry: {
+                id: deletedEntry._id,
+                activityName: deletedEntry.activityName,
+                date: deletedEntry.activityDate
+            }
+        });
     } catch (error) {
         console.error('Error deleting entry:', error);
-        res.status(500).json({ error: 'Server error while deleting entry' });
+        res.status(500).json({ 
+            success: false,
+            error: 'Server error while deleting entry',
+            details: process.env.NODE_ENV === 'development' ? error.message : undefined
+        });
     }
 });
 
