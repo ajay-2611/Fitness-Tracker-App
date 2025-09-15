@@ -45,6 +45,24 @@ router.get('/', async (req, res) => {
         res.status(500).json({ error: 'Server error while fetching entries' });
     }
 });
+// Get a single fitness entry by ID
+router.get('/:id', async (req, res) => {
+    try {
+        const entry = await FitnessEntry.findOne({
+            _id: req.params.id,
+            userId: req.userId
+        });
+        
+        if (!entry) {
+            return res.status(404).json({ error: 'Entry not found or access denied' });
+        }
+        
+        res.json(entry);
+    } catch (error) {
+        console.error('Error fetching entry:', error);
+        res.status(500).json({ error: 'Server error while fetching entry' });
+    }
+});
 
 // Update a fitness entry
 router.put('/:id', async (req, res) => {
