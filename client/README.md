@@ -1,4 +1,21 @@
-# Getting Started with Create React App
+# Fitness Tracker Client
+
+This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
+
+## Deployment to Render
+
+1. Push your code to a GitHub repository
+2. Go to [Render Dashboard](https://dashboard.render.com/)
+3. Click "New" and select "Static Site"
+4. Connect your GitHub repository
+5. Configure the build settings:
+   - Build Command: `npm install && npm run build`
+   - Publish Directory: `build`
+6. Add environment variable:
+   - `REACT_APP_API_URL`: `https://fitnesstrackerapp-8mdm.onrender.com`
+7. Click "Create Static Site"
+
+## Available Scripts
 
 This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
 

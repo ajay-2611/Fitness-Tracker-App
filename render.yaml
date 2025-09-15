@@ -1,0 +1,9 @@
+services:
+  - type: web
+    name: fitness-tracker-client
+    env: static
+    buildCommand: cd client && npm install && npm run build
+    staticPublishPath: "./client/build"
+    envVars:
+      - key: REACT_APP_API_URL
+        value: https://fitnesstrackerapp-8mdm.onrender.com
