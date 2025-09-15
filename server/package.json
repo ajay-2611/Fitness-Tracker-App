@@ -10,7 +10,7 @@
     "test": "echo \"Error: no test specified\" && exit 1",
     "lint": "eslint .",
     "format": "prettier --write \"**/*.{js,json}\"",
-    "prepare": "node -e \"try { if (process.env.NODE_ENV !== 'production' && require('fs').existsSync('.git')) { require('child_process').execSync('npx husky install || echo husky install failed', { stdio: 'inherit' }) } } catch (e) { console.log('Skipping husky install:', e.message) }\""
+    "prepare": "cd .. && husky install server/.husky"
   },
   "dependencies": {
     "bcrypt": "^6.0.0",
@@ -31,12 +31,10 @@
     "eslint": "^8.45.0",
     "eslint-config-prettier": "^8.8.0",
     "eslint-plugin-prettier": "^5.0.0",
+    "husky": "^8.0.3",
     "lint-staged": "^13.2.3",
     "nodemon": "^3.0.1",
     "prettier": "^3.0.0"
-  },
-  "optionalDependencies": {
-    "husky": "^8.0.3"
   },
   "engines": {
     "node": ">=14.0.0"
