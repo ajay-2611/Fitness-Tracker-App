@@ -1,4 +1,5 @@
 const express = require('express');
+const mongoose = require('mongoose');
 const FitnessEntry = require('../models/FitnessEntry');
 const auth = require('../middleware/auth');
 
@@ -48,8 +49,13 @@ router.get('/', async (req, res) => {
 // Get a single fitness entry by ID
 router.get('/:id', async (req, res) => {
     try {
+        // Validate ObjectId format
+        if (!mongoose.Types.ObjectId.isValid(req.params.id)) {
+            return res.status(400).json({ error: 'Invalid entry ID format' });
+        }
+
         const entry = await FitnessEntry.findOne({
-            _id: req.params.id,
+            _id: new mongoose.Types.ObjectId(req.params.id),
             userId: req.userId
         });
         
