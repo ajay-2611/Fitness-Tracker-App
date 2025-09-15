@@ -73,7 +73,7 @@ router.get('/:id', async (req, res) => {
 // Update a fitness entry (supports both PUT and PATCH)
 const updateEntry = async (req, res) => {
     const { id } = req.params;
-    const { activityName, caloriesBurned, duration, intensity, activityDate } = req.body;
+    const updateFields = req.body;
     
     try {
         // Validate ObjectId format
@@ -91,20 +91,40 @@ const updateEntry = async (req, res) => {
             return res.status(404).json({ error: 'Entry not found or unauthorized' });
         }
 
-        // Prepare update data
+        // Prepare update data with type conversion
         const updateData = {};
-        if (activityName !== undefined) updateData.activityName = activityName;
-        if (caloriesBurned !== undefined) updateData.caloriesBurned = Number(caloriesBurned);
-        if (duration !== undefined) updateData.duration = Number(duration);
-        if (intensity !== undefined) updateData.intensity = intensity;
-        if (activityDate !== undefined) updateData.activityDate = new Date(activityDate);
+        
+        if (updateFields.activityName !== undefined) {
+            updateData.activityName = String(updateFields.activityName);
+        }
+        if (updateFields.caloriesBurned !== undefined) {
+            updateData.caloriesBurned = Number(updateFields.caloriesBurned);
+        }
+        if (updateFields.duration !== undefined) {
+            updateData.duration = Number(updateFields.duration);
+        }
+        if (updateFields.intensity !== undefined) {
+            updateData.intensity = String(updateFields.intensity);
+        }
+        if (updateFields.activityDate !== undefined) {
+            updateData.activityDate = new Date(updateFields.activityDate);
+        }
+        
+        // If no valid fields to update
+        if (Object.keys(updateData).length === 0) {
+            return res.status(400).json({ error: 'No valid fields to update' });
+        }
         
         // Update the entry
         const updatedEntry = await FitnessEntry.findByIdAndUpdate(
             id,
-            updateData,
+            { $set: updateData },
             { new: true, runValidators: true }
         );
+        
+        if (!updatedEntry) {
+            return res.status(500).json({ error: 'Failed to update entry' });
+        }
         
         res.json(updatedEntry);
     } catch (error) {
