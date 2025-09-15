@@ -48,6 +48,21 @@ dist/
 .idea/
 .vscode/
 *.swp
+
+# ----------------------
+# Husky
+# ----------------------
+.husky/
+.husky/_/
+.husky/.gitignore
+
+# ----------------------
+# Node.js
+# ----------------------
+.npm
+.eslintcache
+.node_repl_history
+.yarn-integrity
 *.swo
 
 # ----------------------
