@@ -70,28 +70,41 @@ router.get('/:id', async (req, res) => {
     }
 });
 
-// Update a fitness entry
-router.put('/:id', async (req, res) => {
+// Update a fitness entry (supports both PUT and PATCH)
+const updateEntry = async (req, res) => {
     const { id } = req.params;
     const { activityName, caloriesBurned, duration, intensity, activityDate } = req.body;
     
     try {
-        const updateData = {};
-        if (activityName) updateData.activityName = activityName;
-        if (caloriesBurned) updateData.caloriesBurned = Number(caloriesBurned);
-        if (duration) updateData.duration = Number(duration);
-        if (intensity) updateData.intensity = intensity;
-        if (activityDate) updateData.activityDate = new Date(activityDate);
+        // Validate ObjectId format
+        if (!mongoose.Types.ObjectId.isValid(id)) {
+            return res.status(400).json({ error: 'Invalid entry ID format' });
+        }
+
+        // Check if entry exists and belongs to user
+        const entry = await FitnessEntry.findOne({
+            _id: new mongoose.Types.ObjectId(id),
+            userId: req.userId
+        });
         
-        const updatedEntry = await FitnessEntry.findOneAndUpdate(
-            { _id: id, userId: req.userId },
+        if (!entry) {
+            return res.status(404).json({ error: 'Entry not found or unauthorized' });
+        }
+
+        // Prepare update data
+        const updateData = {};
+        if (activityName !== undefined) updateData.activityName = activityName;
+        if (caloriesBurned !== undefined) updateData.caloriesBurned = Number(caloriesBurned);
+        if (duration !== undefined) updateData.duration = Number(duration);
+        if (intensity !== undefined) updateData.intensity = intensity;
+        if (activityDate !== undefined) updateData.activityDate = new Date(activityDate);
+        
+        // Update the entry
+        const updatedEntry = await FitnessEntry.findByIdAndUpdate(
+            id,
             updateData,
             { new: true, runValidators: true }
         );
-        
-        if (!updatedEntry) {
-            return res.status(404).json({ error: 'Entry not found or unauthorized' });
-        }
         
         res.json(updatedEntry);
     } catch (error) {
@@ -102,7 +115,11 @@ router.put('/:id', async (req, res) => {
                 : 'Server error while updating entry' 
         });
     }
-});
+};
+
+// Support both PUT and PATCH methods
+router.put('/:id', updateEntry);
+router.patch('/:id', updateEntry);
 
 // Delete a fitness entry
 router.delete('/:id', async (req, res) => {
