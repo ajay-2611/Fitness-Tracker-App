@@ -3,11 +3,11 @@ import { useNavigate } from 'react-router-dom';
 import './FitnessContent.css';
 
 const workoutTypes = {
-    'Running': 5,        // ~150 calories for 30 min (for 150lb person)
-    'Cycling': 4.2,      // ~125 calories for 30 min
-    'Weight lifting': 3, // ~90 calories for 30 min
-    'Jumping jacks': 6,  // ~180 calories for 30 min
-    'Plank': 2.5         // ~75 calories for 30 min
+    'Running': 5,
+    'Cycling': 4.2,
+    'Weight lifting': 3,
+    'Jumping jacks': 6,
+    'Plank': 2.5
 };
 
 const intensityLevels = {
@@ -32,7 +32,7 @@ const FitnessContent = ({ handleSignOut }) => {
     // Initialize form data - keep duration as string for input handling
     const [formData, setFormData] = useState(() => ({
         activityName: 'Running',
-        duration: "30", // Keep as string for input field
+        duration: "30",
         intensity: 'medium',
         activityDate: new Date().toISOString().split('T')[0]
     }));
@@ -45,69 +45,54 @@ const FitnessContent = ({ handleSignOut }) => {
     const resetForm = () => {
         setFormData({
             activityName: 'Running',
-            duration: "30", // Keep as string
+            duration: "30",
             intensity: 'medium',
             activityDate: new Date().toISOString().split('T')[0]
         });
     };
 
-    // Fetch entries when component mounts
-    useEffect(() => {
-        const fetchEntries = async () => {
-            try {
-                const token = localStorage.getItem('token');
-                if (!token) {
-                    handleSignOut();
-                    return;
-                }
-                
-                const response = await fetch(`${process.env.REACT_APP_API_URL || 'http://localhost:8000'}/api/entries`, {
-                    headers: {
-                        'Authorization': `Bearer ${token}`
-                    }
-                });
-                
-                if (response.ok) {
-                    const data = await response.json();
-                    setFitnessEntries(data);
-                } else if (response.status === 401) {
-                    handleSignOut();
-                }
-            } catch (error) {
-                console.error('Error fetching entries:', error);
-                setError('Failed to fetch entries. Please try again.');
-            } finally {
-                setIsLoading(false);
+    // Fetch entries when component mounts.
+    // ADDED: Re-fetch entries after a successful form submission.
+    const fetchEntries = useCallback(async () => {
+        setIsLoading(true);
+        try {
+            const token = localStorage.getItem('token');
+            if (!token) {
+                handleSignOut();
+                return;
             }
-        };
-        
-        fetchEntries();
+            
+            const response = await fetch(`${process.env.REACT_APP_API_URL || 'http://localhost:8000'}/api/entries`, {
+                headers: {
+                    'Authorization': `Bearer ${token}`
+                }
+            });
+            
+            if (response.ok) {
+                const data = await response.json();
+                setFitnessEntries(data);
+            } else if (response.status === 401) {
+                handleSignOut();
+            }
+        } catch (error) {
+            console.error('Error fetching entries:', error);
+            setError('Failed to fetch entries. Please try again.');
+        } finally {
+            setIsLoading(false);
+        }
     }, [handleSignOut]);
 
-    // Input change handler - absolutely no processing during typing
+    useEffect(() => {
+        fetchEntries();
+    }, [fetchEntries]);
+
+    // Input change handler - updates state with every keystroke
     const handleInputChange = useCallback((e) => {
         const { name, value } = e.target;
-        
-        // Direct update without any validation or processing
         setFormData(prev => ({
             ...prev,
             [name]: value
         }));
-    }, []);
-
-    // Only validate duration when user stops typing (on blur)
-    const handleDurationBlur = useCallback((e) => {
-        const value = e.target.value;
-        const numValue = parseInt(value, 10);
-        
-        // Only change if completely invalid
-        if (value === '' || isNaN(numValue) || numValue < 1) {
-            setFormData(prev => ({
-                ...prev,
-                duration: "1"
-            }));
-        }
-        // Otherwise leave the user's input exactly as they typed it
     }, []);
 
     // Submit form
@@ -126,7 +111,7 @@ const FitnessContent = ({ handleSignOut }) => {
         const method = editEntryIndex !== null ? 'PUT' : 'POST';
 
         try {
-            // Convert duration to number safely - only when submitting
+            // Validate and convert duration to number safely
             let duration = parseInt(formData.duration, 10);
             if (isNaN(duration) || duration < 1) {
                 duration = 1;
@@ -155,15 +140,8 @@ const FitnessContent = ({ handleSignOut }) => {
             });
 
             if (response.ok) {
-                const data = await response.json();
-                if (editEntryIndex !== null) {
-                    const updatedEntries = [...fitnessEntries];
-                    updatedEntries[editEntryIndex] = data;
-                    setFitnessEntries(updatedEntries);
-                    setEditEntryIndex(null);
-                } else {
-                    setFitnessEntries([data, ...fitnessEntries]);
-                }
+                // SUCCESS: Refetch all entries to get the latest data.
+                await fetchEntries(); 
                 setShowAddEntryForm(false);
                 resetForm();
             } else {
@@ -323,7 +301,6 @@ const FitnessContent = ({ handleSignOut }) => {
                                     name="duration"
                                     value={formData.duration}
                                     onChange={handleInputChange}
-                                    onBlur={handleDurationBlur}
                                     min="1"
                                     step="1"
                                     required
