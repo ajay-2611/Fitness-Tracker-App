@@ -1,19 +1,19 @@
-import React, { useState, useEffect } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import './FitnessContent.css';
 
 const workoutTypes = {
-    'Running': 10,
-    'Cycling': 8,
-    'Weight lifting': 6,
-    'Jumping jacks': 12,
-    'Plank': 4
+    'Running': 5,        // ~150 calories for 30 min (for 150lb person)
+    'Cycling': 4.2,      // ~125 calories for 30 min
+    'Weight lifting': 3, // ~90 calories for 30 min
+    'Jumping jacks': 6,  // ~180 calories for 30 min
+    'Plank': 2.5         // ~75 calories for 30 min
 };
 
 const intensityLevels = {
     'slow': 0.8,
     'medium': 1,
-    'intense': 1.2
+    'intense': 2
 };
 
 const workoutImages = {
@@ -28,28 +28,31 @@ const FitnessContent = ({ handleSignOut }) => {
     const [fitnessEntries, setFitnessEntries] = useState([]);
     const [showAddEntryForm, setShowAddEntryForm] = useState(false);
     const [editEntryIndex, setEditEntryIndex] = useState(null);
-    const [formData, setFormData] = useState({
+
+    // Initialize form data - keep duration as string for input handling
+    const [formData, setFormData] = useState(() => ({
         activityName: 'Running',
-        duration: 30,
+        duration: "30", // Keep as string for input field
         intensity: 'medium',
         activityDate: new Date().toISOString().split('T')[0]
-    });
+    }));
+
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState('');
     const navigate = useNavigate();
 
-    // Initialize form data with default values
+    // Reset form to defaults
     const resetForm = () => {
         setFormData({
             activityName: 'Running',
-            duration: 30,
+            duration: "30", // Keep as string
             intensity: 'medium',
             activityDate: new Date().toISOString().split('T')[0]
         });
     };
 
+    // Fetch entries when component mounts
     useEffect(() => {
-        // Fetch fitness entries when component mounts
         const fetchEntries = async () => {
             try {
                 const token = localStorage.getItem('token');
@@ -68,7 +71,6 @@ const FitnessContent = ({ handleSignOut }) => {
                     const data = await response.json();
                     setFitnessEntries(data);
                 } else if (response.status === 401) {
-                    // Token is invalid or expired
                     handleSignOut();
                 }
             } catch (error) {
@@ -82,14 +84,33 @@ const FitnessContent = ({ handleSignOut }) => {
         fetchEntries();
     }, [handleSignOut]);
 
-    const handleInputChange = (e) => {
+    // Input change handler - absolutely no processing during typing
+    const handleInputChange = useCallback((e) => {
         const { name, value } = e.target;
+        
+        // Direct update without any validation or processing
         setFormData(prev => ({
             ...prev,
             [name]: value
         }));
-    };
+    }, []);
 
+    // Only validate duration when user stops typing (on blur)
+    const handleDurationBlur = useCallback((e) => {
+        const value = e.target.value;
+        const numValue = parseInt(value, 10);
+        
+        // Only change if completely invalid
+        if (value === '' || isNaN(numValue) || numValue < 1) {
+            setFormData(prev => ({
+                ...prev,
+                duration: "1"
+            }));
+        }
+        // Otherwise leave the user's input exactly as they typed it
+    }, []);
+
+    // Submit form
     const handleSubmit = async (e) => {
         e.preventDefault();
         const token = localStorage.getItem('token');
@@ -105,17 +126,22 @@ const FitnessContent = ({ handleSignOut }) => {
         const method = editEntryIndex !== null ? 'PUT' : 'POST';
 
         try {
-            // Calculate calories before submitting
+            // Convert duration to number safely - only when submitting
+            let duration = parseInt(formData.duration, 10);
+            if (isNaN(duration) || duration < 1) {
+                duration = 1;
+            }
+            
             const caloriesBurned = calculateCalories(
                 formData.activityName,
-                parseInt(formData.duration),
+                duration,
                 formData.intensity
             );
 
             const entryData = {
                 ...formData,
+                duration,
                 caloriesBurned,
-                duration: parseInt(formData.duration),
                 activityDate: formData.activityDate || new Date().toISOString().split('T')[0]
             };
 
@@ -134,6 +160,7 @@ const FitnessContent = ({ handleSignOut }) => {
                     const updatedEntries = [...fitnessEntries];
                     updatedEntries[editEntryIndex] = data;
                     setFitnessEntries(updatedEntries);
+                    setEditEntryIndex(null);
                 } else {
                     setFitnessEntries([data, ...fitnessEntries]);
                 }
@@ -149,6 +176,7 @@ const FitnessContent = ({ handleSignOut }) => {
         }
     };
 
+    // Delete entry
     const handleDelete = async (id) => {
         const token = localStorage.getItem('token');
         try {
@@ -169,11 +197,12 @@ const FitnessContent = ({ handleSignOut }) => {
         }
     };
 
+    // Edit entry
     const handleEdit = (index) => {
         const entry = fitnessEntries[index];
         setFormData({
             activityName: entry.activityName,
-            duration: entry.duration,
+            duration: String(entry.duration || 1), // Convert to string for input
             intensity: entry.intensity,
             activityDate: entry.activityDate.split('T')[0]
         });
@@ -181,23 +210,17 @@ const FitnessContent = ({ handleSignOut }) => {
         setShowAddEntryForm(true);
     };
 
+    // Calculate calories
     const calculateCalories = (activity, duration, intensity) => {
         const baseCalories = workoutTypes[activity] || 5;
         const intensityMultiplier = intensityLevels[intensity] || 1;
         return Math.round(baseCalories * duration * intensityMultiplier);
     };
 
-    const handleAddNewEntry = (e) => {
-        e.preventDefault();
-        setFormData({
-            activityName: 'Running',
-            duration: '',
-            intensity: 'medium',
-            activityDate: new Date().toISOString().split('T')[0]
-        });
+    const handleAddNewEntry = () => {
+        resetForm();
         setEditEntryIndex(null);
         setShowAddEntryForm(true);
-        setError('');
         setError('');
     };
 
@@ -205,6 +228,7 @@ const FitnessContent = ({ handleSignOut }) => {
         setShowAddEntryForm(false);
         setEditEntryIndex(null);
         setError('');
+        resetForm();
     };
 
     if (isLoading) {
@@ -275,19 +299,6 @@ const FitnessContent = ({ handleSignOut }) => {
                             </div>
                             
                             <div className="form-group">
-                                <label>Duration (minutes):</label>
-                                <input
-                                    className="form-control"
-                                    type="number"
-                                    name="duration"
-                                    value={formData.duration}
-                                    onChange={handleInputChange}
-                                    min="1"
-                                    required
-                                />
-                            </div>
-                            
-                            <div className="form-group">
                                 <label>Intensity:</label>
                                 <select
                                     className="form-control"
@@ -305,6 +316,20 @@ const FitnessContent = ({ handleSignOut }) => {
                             </div>
                             
                             <div className="form-group">
+                                <label>Duration (minutes):</label>
+                                <input
+                                    className="form-control"
+                                    type="number"
+                                    name="duration"
+                                    value={formData.duration}
+                                    onChange={handleInputChange}
+                                    onBlur={handleDurationBlur}
+                                    min="1"
+                                    step="1"
+                                    required
+                                />
+                            </div>
+                            <div className="form-group">
                                 <label>Date:</label>
                                 <input
                                     className="form-control"
@@ -315,7 +340,6 @@ const FitnessContent = ({ handleSignOut }) => {
                                     required
                                 />
                             </div>
-                            
                             <div className="form-actions">
                                 <button type="submit" className="btn btn-primary">
                                     {editEntryIndex !== null ? 'Update Entry' : 'Add Entry'}
