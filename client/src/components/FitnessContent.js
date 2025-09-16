@@ -98,9 +98,10 @@ const FitnessContent = ({ handleSignOut }) => {
             return;
         }
 
+        const apiUrl = process.env.REACT_APP_API_URL || 'http://localhost:8000';
         const url = editEntryIndex !== null
-            ? `http://localhost:8000/api/entries/${fitnessEntries[editEntryIndex]._id}`
-            : 'http://localhost:8000/api/entries';
+            ? `${apiUrl}/api/entries/${fitnessEntries[editEntryIndex]._id}`
+            : `${apiUrl}/api/entries`;
         const method = editEntryIndex !== null ? 'PUT' : 'POST';
 
         try {
@@ -151,11 +152,14 @@ const FitnessContent = ({ handleSignOut }) => {
     const handleDelete = async (id) => {
         const token = localStorage.getItem('token');
         try {
-            const response = await fetch(`http://localhost:8000/api/entries/${id}`, {
+            const apiUrl = process.env.REACT_APP_API_URL || 'http://localhost:8000';
+            const response = await fetch(`${apiUrl}/api/entries/${id}`, {
                 method: 'DELETE',
                 headers: {
-                    'Authorization': `Bearer ${token}`
-                }
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'application/json'
+                },
+                credentials: 'include'
             });
             if (response.ok) {
                 setFitnessEntries(fitnessEntries.filter(entry => entry._id !== id));

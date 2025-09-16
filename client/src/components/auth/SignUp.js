@@ -52,16 +52,25 @@ const SignUp = ({ onSignUp }) => {
     setIsLoading(true);
 
     try {
-      const response = await fetch(`${process.env.REACT_APP_API_URL || 'http://localhost:8000'}/api/auth/signup`, {
+      const apiUrl = process.env.REACT_APP_API_URL || 'http://localhost:8000';
+      const requestUrl = `${apiUrl}/api/auth/signup`;
+      const requestBody = {
+        name: formData.name,
+        username: formData.email, // Using email as username to match backend
+        email: formData.email,
+        password: formData.password
+      };
+      
+      console.log('Sending signup request to:', requestUrl);
+      console.log('Request body:', requestBody);
+      
+      const response = await fetch(requestUrl, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({
-          name: formData.name,
-          email: formData.email,
-          password: formData.password
-        }),
+        credentials: 'include',
+        body: JSON.stringify(requestBody),
       });
 
       const data = await response.json();

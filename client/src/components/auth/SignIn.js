@@ -32,16 +32,26 @@ const SignIn = ({ onSignIn }) => {
     }
 
     try {
-      const response = await fetch(`${process.env.REACT_APP_API_URL || 'http://localhost:8000'}/api/auth/signin`, {
+      const apiUrl = process.env.REACT_APP_API_URL || 'http://localhost:8000';
+      const requestUrl = `${apiUrl}/api/auth/signin`;
+      const requestBody = {
+        username: formData.email, // Using email as username to match backend
+        password: formData.password
+      };
+      
+      console.log('Sending request to:', requestUrl);
+      console.log('Request body:', requestBody);
+      
+      const response = await fetch(requestUrl, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({
-          username: formData.email, // Using email as username
-          password: formData.password
-        }),
+        credentials: 'include', // Important for cookies
+        body: JSON.stringify(requestBody),
       });
+      
+      console.log('Response status:', response.status);
 
       const data = await response.json();
       
