@@ -58,7 +58,7 @@ const FitnessContent = ({ handleSignOut }) => {
                     return;
                 }
                 
-                const response = await fetch('http://localhost:8000/api/entries', {
+                const response = await fetch(`${process.env.REACT_APP_API_URL || 'http://localhost:8000'}/api/entries`, {
                     headers: {
                         'Authorization': `Bearer ${token}`
                     }

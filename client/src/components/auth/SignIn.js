@@ -32,7 +32,7 @@ const SignIn = ({ onSignIn }) => {
     }
 
     try {
-      const response = await fetch('http://localhost:8000/api/auth/signin', {
+      const response = await fetch(`${process.env.REACT_APP_API_URL || 'http://localhost:8000'}/api/auth/signin`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
