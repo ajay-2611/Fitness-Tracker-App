@@ -12,7 +12,8 @@ const SignUp = ({ onSignUp }) => {
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
   const [isLoading, setIsLoading] = useState(false);
-  const [showPassword, setShowPassword] = useState(false);
+  const [acceptedTerms, setAcceptedTerms] = useState(false);
+  const [showTermsError, setShowTermsError] = useState(false);
   const navigate = useNavigate();
 
   const validateEmail = (email) => {
@@ -32,6 +33,7 @@ const SignUp = ({ onSignUp }) => {
     e.preventDefault();
     setError('');
     setSuccess('');
+    setShowTermsError(false);
     
     // Basic validation
     if (!formData.name || !formData.email || !formData.password) {
@@ -46,6 +48,12 @@ const SignUp = ({ onSignUp }) => {
     
     if (formData.password.length < 6) {
       setError('Password must be at least 6 characters long');
+      return;
+    }
+    
+    if (!acceptedTerms) {
+      setError('Please accept the terms and conditions');
+      setShowTermsError(true);
       return;
     }
     
@@ -163,9 +171,9 @@ const SignUp = ({ onSignUp }) => {
             
             <div className="form-group">
               <label>Password</label>
-              <div className="input-group" style={{ position: 'relative' }}>
+              <div className="input-group">
                 <input
-                  type={showPassword ? "text" : "password"}
+                  type="password"
                   name="password"
                   value={formData.password}
                   onChange={handleChange}
@@ -173,32 +181,12 @@ const SignUp = ({ onSignUp }) => {
                   required
                   className="form-input"
                   style={{
-                    padding: '12px 45px 12px 15px',
+                    padding: '15px',
                     fontSize: '16px',
-                    minHeight: '44px',
+                    minHeight: '50px',
                     width: '100%'
                   }}
                 />
-                <button 
-                  type="button" 
-                  className="password-toggle"
-                  onClick={() => setShowPassword(!showPassword)}
-                  aria-label={showPassword ? 'Hide password' : 'Show password'}
-                  style={{
-                    position: 'absolute',
-                    right: '15px',
-                    top: '50%',
-                    transform: 'translateY(-50%)',
-                    background: 'none',
-                    border: 'none',
-                    cursor: 'pointer',
-                    fontSize: '14px',
-                    color: '#666',
-                    fontWeight: '500'
-                  }}
-                >
-                  {showPassword ? 'Hide' : 'Show'}
-                </button>
               </div>
             </div>
 
@@ -206,10 +194,21 @@ const SignUp = ({ onSignUp }) => {
               <label className="checkbox-container">
                 <input 
                   type="checkbox" 
-                  required
+                  checked={acceptedTerms}
+                  onChange={(e) => {
+                    setAcceptedTerms(e.target.checked);
+                    if (e.target.checked) {
+                      setShowTermsError(false);
+                      setError('');
+                    }
+                  }}
+                  className={showTermsError ? 'checkbox-error' : ''}
                 />
-                <span className="checkmark"></span>
-                I agree to the <a href="/terms" className="terms-link">Terms</a> and <a href="/privacy" className="terms-link">Privacy Policy</a>
+                <span className={`checkmark ${showTermsError ? 'error' : ''}`}></span>
+                I agree to the <a href="/terms" className="terms-link">Terms & Conditions</a>
+                {showTermsError && (
+                  <span className="terms-error">* Please accept the terms and conditions</span>
+                )}
               </label>
             </div>
 
