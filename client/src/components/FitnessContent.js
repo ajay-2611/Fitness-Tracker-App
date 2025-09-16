@@ -28,20 +28,16 @@ const FitnessContent = ({ handleSignOut }) => {
     const [fitnessEntries, setFitnessEntries] = useState([]);
     const [showAddEntryForm, setShowAddEntryForm] = useState(false);
     const [editEntryIndex, setEditEntryIndex] = useState(null);
-
-    // Initialize form data - keep duration as string for input handling
     const [formData, setFormData] = useState(() => ({
         activityName: 'Running',
         duration: "30",
         intensity: 'medium',
         activityDate: new Date().toISOString().split('T')[0]
     }));
-
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState('');
     const navigate = useNavigate();
 
-    // Reset form to defaults
     const resetForm = () => {
         setFormData({
             activityName: 'Running',
@@ -51,8 +47,7 @@ const FitnessContent = ({ handleSignOut }) => {
         });
     };
 
-    // Fetch entries when component mounts.
-    // ADDED: Re-fetch entries after a successful form submission.
+    // The core change: wrap fetchEntries in useCallback to prevent re-creation.
     const fetchEntries = useCallback(async () => {
         setIsLoading(true);
         try {
@@ -61,13 +56,11 @@ const FitnessContent = ({ handleSignOut }) => {
                 handleSignOut();
                 return;
             }
-            
             const response = await fetch(`${process.env.REACT_APP_API_URL || 'http://localhost:8000'}/api/entries`, {
                 headers: {
                     'Authorization': `Bearer ${token}`
                 }
             });
-            
             if (response.ok) {
                 const data = await response.json();
                 setFitnessEntries(data);
@@ -82,11 +75,11 @@ const FitnessContent = ({ handleSignOut }) => {
         }
     }, [handleSignOut]);
 
+    // This useEffect will now only run once when the component mounts.
     useEffect(() => {
         fetchEntries();
     }, [fetchEntries]);
 
-    // Input change handler - updates state with every keystroke
     const handleInputChange = useCallback((e) => {
         const { name, value } = e.target;
         setFormData(prev => ({
@@ -95,7 +88,6 @@ const FitnessContent = ({ handleSignOut }) => {
         }));
     }, []);
 
-    // Submit form
     const handleSubmit = async (e) => {
         e.preventDefault();
         const token = localStorage.getItem('token');
@@ -103,7 +95,6 @@ const FitnessContent = ({ handleSignOut }) => {
             handleSignOut();
             return;
         }
-
         const apiUrl = process.env.REACT_APP_API_URL || 'http://localhost:8000';
         const url = editEntryIndex !== null
             ? `${apiUrl}/api/entries/${fitnessEntries[editEntryIndex]._id}`
@@ -111,12 +102,10 @@ const FitnessContent = ({ handleSignOut }) => {
         const method = editEntryIndex !== null ? 'PUT' : 'POST';
 
         try {
-            // Validate and convert duration to number safely
             let duration = parseInt(formData.duration, 10);
             if (isNaN(duration) || duration < 1) {
                 duration = 1;
             }
-            
             const caloriesBurned = calculateCalories(
                 formData.activityName,
                 duration,
@@ -140,8 +129,7 @@ const FitnessContent = ({ handleSignOut }) => {
             });
 
             if (response.ok) {
-                // SUCCESS: Refetch all entries to get the latest data.
-                await fetchEntries(); 
+                await fetchEntries(); // Refetch entries after a successful save
                 setShowAddEntryForm(false);
                 resetForm();
             } else {
@@ -154,7 +142,6 @@ const FitnessContent = ({ handleSignOut }) => {
         }
     };
 
-    // Delete entry
     const handleDelete = async (id) => {
         const token = localStorage.getItem('token');
         try {
@@ -175,12 +162,11 @@ const FitnessContent = ({ handleSignOut }) => {
         }
     };
 
-    // Edit entry
     const handleEdit = (index) => {
         const entry = fitnessEntries[index];
         setFormData({
             activityName: entry.activityName,
-            duration: String(entry.duration || 1), // Convert to string for input
+            duration: String(entry.duration || 1),
             intensity: entry.intensity,
             activityDate: entry.activityDate.split('T')[0]
         });
@@ -188,7 +174,6 @@ const FitnessContent = ({ handleSignOut }) => {
         setShowAddEntryForm(true);
     };
 
-    // Calculate calories
     const calculateCalories = (activity, duration, intensity) => {
         const baseCalories = workoutTypes[activity] || 5;
         const intensityMultiplier = intensityLevels[intensity] || 1;
